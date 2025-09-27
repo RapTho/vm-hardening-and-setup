@@ -50,4 +50,4 @@ ansible-builder build -v
 
 ## Using the Execution Environment
 
-Check the [chapter in the parent's README.md](../README.md#using-with-your-existing-project-files) to learn how to use the execution environment.
+Check the [chapter in the parent's README.md](../README.md#running-playbooks-with-the-execution-environment) to learn how to use the execution environment.

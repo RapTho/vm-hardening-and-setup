@@ -1,3 +1,0 @@
-# For example
-# rsync [platfo rm:rpm]
-# kubernetes-client [platform:rpm]

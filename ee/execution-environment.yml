@@ -1,13 +1,22 @@
 ---
-version: 1
-
-build_arg_defaults:
-  EE_BASE_IMAGE: quay.io/ansible/ansible-runner:latest
-  EE_BUILDER_IMAGE: quay.io/ansible/ansible-builder:latest
-
-ansible_config: ansible.cfg
-
+version: 3
+images:
+  base_image:
+    name: docker.io/redhat/ubi9:latest
 dependencies:
-  galaxy: requirements.yml
-  python: requirements.txt
-  system: bindep.txt
+  ansible_core:
+    package_pip: ansible-core
+  ansible_runner:
+    package_pip: ansible-runner
+  galaxy:
+    collections:
+      - ansible.posix
+      - community.crypto
+      - community.general
+
+additional_build_steps:
+  prepend_base:
+    - RUN mkdir -p /usr/share/ansible/roles
+  append_final:
+    - COPY roles/secure-vm /usr/share/ansible/roles/secure-vm
+    - COPY roles/setup-vm /usr/share/ansible/roles/setup-vm

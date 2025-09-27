@@ -1,12 +1,12 @@
 # Some security hardening of the host
 ---
 - name: Configure SELinux
-  selinux:
+  ansible.posix.selinux:
     policy: targeted
     state: enforcing
 
 - name: "Configure SELinux to accept custom ssh port {{ ssh_port }}"
-  seport:
+  community.general.seport:
     ports: "{{ ssh_port }}"
     proto: tcp
     setype: ssh_port_t
@@ -14,18 +14,18 @@
   when: ssh_port != 22
 
 - name: Install firewalld
-  yum:
+  ansible.builtin.yum:
     name: firewalld
     state: latest
 
 - name: Start and enable firewalld
-  service:
+  ansible.builtin.service:
     name: firewalld
     enabled: true
     state: started
 
 - name: Allow configured ports through firewall
-  firewalld:
+  ansible.posix.firewalld:
     port: "{{ item }}"
     permanent: true
     immediate: true
@@ -33,7 +33,7 @@
   loop: "{{ firewall_allowed_ports }}"
 
 - name: "Configure ssh to listen on custom port {{ ssh_port }}"
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
     regexp: "{{ item.From }}"
     line: "{{ item.To }}"
@@ -45,7 +45,7 @@
   when: ssh_port != 22
 
 - name: Prohibit root login via ssh
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
     regexp: "{{ item.From }}"
     line: "{{ item.To }}"
@@ -57,7 +57,7 @@
   notify: Restart ssh
 
 - name: Allow root login via ssh
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
     regexp: "{{ item.From }}"
     line: "{{ item.To }}"
@@ -70,7 +70,7 @@
 
 # Disable password authentication
 - name: Disable password authentication
-  lineinfile:
+  ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
     regexp: "{{ item.From }}"
     line: "{{ item.To }}"

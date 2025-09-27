@@ -34,51 +34,61 @@ Features:
 
 For more details, see the [setup-vm README](roles/setup-vm/README.md).
 
-## Prerequisites
+## Getting started with Execution Environment
 
-As Ansible is not included in the RHEL8 repositories, you need to add a new repo
+This project uses an Ansible Execution Environment (EE) to package the roles and their dependencies into a container image, providing a consistent environment for running the playbooks.
 
-```
-sudo subscription-manager repos --enable ansible-2-for-rhel-8-x86_64-rpms
-```
+Checkout the [ee/README.md](./ee/README.md) for build instructions to build your execution environment container image.
 
-Install Ansible on your Red Hat Enterprise Linux host.
+### Preparing your target machine(s)
 
-```
-sudo yum -y install ansible
-```
+1. Create an ansible user with sudo privileges on your managed host:
 
-Create an ansible user with sudo privileges on your managed host, which doesn't require a password to elevate privileges
-
-```
+```bash
 sudo useradd ansible
 sudo passwd ansible
 sudo echo "ansible ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ansible
 ```
 
-Create ssh keys and copy the public key to all remote hosts you wish to manage. Replace **MYHOST** with your remote host e.g. 192.168.1.2
+2. Create SSH keys and copy the public key to all remote hosts you wish to manage:
 
-```
+```bash
 ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa_ansible
-ssh-copy-id -i ~/.ssh/id_rsa_ansible.pub ansible@MYHOST
+ssh-copy-id -i ~/.ssh/id_rsa_ansible.pub ansible@YOUR_HOST_IP
 ```
 
-## Clone the repository
+3. Update the inventory file with your VM's IP address or hostname:
 
-```
-raphael@desktop:~$ git clone https://github.com/RapTho/vm-security-hardening.git
-raphael@desktop:~$ cd vm-security-hardening
-```
-
-## Add your ansible managed vm
-
-In the [inventory](inventory) file, replace the example IP address with your vm's IP or FQDN.
-
-Do **NOT remove** the ansible_port or ansible_ssh_private_key_file.
-
-```
+```ini
 [workstation]
-192.168.122.136 ansible_port="{{ ssh_port }}" ansible_ssh_private_key_file=~/.ssh/id_rsa_ansible
+YOUR_HOST_IP ansible_port="{{ ssh_port }}" ansible_ssh_private_key_file=~/.ssh/id_rsa_ansible
+```
+
+### Running Playbooks with the Execution Environment
+
+Run the playbook using `ansible-navigator` with the execution environment:
+
+```bash
+ansible-navigator run playbook.yml -i inventory --eei localhost/ansible-execution-env:latest --pull-policy never
+```
+
+### SSH Keys for created users
+
+When you run the playbook, the setup-vm role will:
+
+1. Create a `keys/` directory in your project root
+2. Generate SSH key pairs for each user in this directory
+3. Configure the users on the target VM with these keys
+
+The keys are stored on your local machine (in the project directory), not in the execution environment.
+After running the playbook, you'll find the keys at:
+
+```bash
+./keys/user1_id_rsa
+./keys/user1_id_rsa.pub
+./keys/user2_id_rsa
+./keys/user2_id_rsa.pub
+...
 ```
 
 ## Configuration
@@ -97,12 +107,4 @@ You can customize the setup-vm role by modifying the following files:
 - `roles/setup-vm/defaults/main.yml`: Change user settings and default tools
 - `roles/setup-vm/vars/main.yml`: Add additional tools to install
 
-## Run the Ansible playbook
-
-The remote host will be **reset** to its previous state. All workshop users and their home directories will be deleted!
-
-```
-raphael@desktop:~$ ansible-playbook playbook.yml
-```
-
-The VM is now ready with security hardening applied and users/tools set up.
+For more detailed information about the execution environment, see the [Execution Environment README](ee/README.md).

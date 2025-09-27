@@ -1,17 +1,17 @@
 ---
 - name: Gather facts about the system
-  setup:
+  ansible.builtin.setup:
     gather_subset:
       - "!all"
       - "!min"
       - "distribution"
 
 - name: Check if system is RHEL or derivative
-  set_fact:
+  ansible.builtin.set_fact:
     is_rhel_derivative: "{{ ansible_facts['distribution'] in ['RedHat', 'CentOS', 'Rocky', 'AlmaLinux', 'Fedora'] }}"
 
 - name: Fail if not running on RHEL or derivative
-  fail:
+  ansible.builtin.fail:
     msg: "This role is designed for RHEL and its derivatives. Current OS: {{ ansible_facts['distribution'] }}"
   when: not is_rhel_derivative
 

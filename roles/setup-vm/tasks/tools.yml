@@ -1,5 +1,5 @@
 ---
 - name: Install required tools
-  package:
+  ansible.builtin.package:
     name: "{{ tools_packages }}"
     state: present

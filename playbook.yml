@@ -1,9 +1,8 @@
 ---
-- name: Secure remote host
+- name: Secure and setup remote host
   hosts: workstation
   gather_facts: false
-  vars_files:
-    - password.yml
 
   roles:
     - secure-vm
+    - setup-vm

@@ -1,0 +1,5 @@
+---
+- name: Install required tools
+  package:
+    name: "{{ tools_packages }}"
+    state: present

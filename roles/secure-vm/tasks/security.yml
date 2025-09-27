@@ -19,18 +19,18 @@
     state: latest
 
 - name: Start and enable firewalld
-  service: 
+  service:
     name: firewalld
     enabled: true
     state: started
 
-- name: "Allow custom ssh port {{ ssh_port }} through firewall"
+- name: Allow configured ports through firewall
   firewalld:
-    port: "{{ ssh_port }}/tcp"
+    port: "{{ item }}"
     permanent: true
     immediate: true
     state: enabled
-  when: ssh_port != 22
+  loop: "{{ firewall_allowed_ports }}"
 
 - name: "Configure ssh to listen on custom port {{ ssh_port }}"
   lineinfile:
@@ -39,8 +39,8 @@
     line: "{{ item.To }}"
     state: present
   with_items:
-    - { From: '^Port', To: "Port {{ ssh_port }}"}
-    - { From: '^#Port', To: "Port {{ ssh_port }}"}
+    - { From: "^Port", To: "Port {{ ssh_port }}" }
+    - { From: "^#Port", To: "Port {{ ssh_port }}" }
   notify: Restart ssh
   when: ssh_port != 22
 
@@ -51,8 +51,8 @@
     line: "{{ item.To }}"
     state: present
   with_items:
-    - { From: '^PermitRootLogin', To: "PermitRootLogin no"}
-    - { From: '^#PermitRootLogin', To: "PermitRootLogin no"}
+    - { From: "^PermitRootLogin", To: "PermitRootLogin no" }
+    - { From: "^#PermitRootLogin", To: "PermitRootLogin no" }
   when: permitRootLogin == false
   notify: Restart ssh
 
@@ -63,7 +63,19 @@
     line: "{{ item.To }}"
     state: present
   with_items:
-    - { From: '^PermitRootLogin', To: "PermitRootLogin yes"}
-    - { From: '^#PermitRootLogin', To: "PermitRootLogin yes"}
+    - { From: "^PermitRootLogin", To: "PermitRootLogin yes" }
+    - { From: "^#PermitRootLogin", To: "PermitRootLogin yes" }
   when: permitRootLogin == true
+  notify: Restart ssh
+
+# Disable password authentication
+- name: Disable password authentication
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.From }}"
+    line: "{{ item.To }}"
+    state: present
+  with_items:
+    - { From: "^PasswordAuthentication", To: "PasswordAuthentication no" }
+    - { From: "^#PasswordAuthentication", To: "PasswordAuthentication no" }
   notify: Restart ssh

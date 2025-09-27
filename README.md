@@ -1,6 +1,40 @@
-## Apply basic security to new Fedora based VM
+# VM Security Hardening and Setup
 
-### Prerequisites
+This project provides Ansible roles for hardening the security of RHEL-based VMs and setting up users and tools.
+
+## Roles
+
+### secure-vm
+
+The `secure-vm` role applies security hardening to a RHEL-based VM or its derivatives (CentOS, Rocky, AlmaLinux, Fedora).
+
+Features:
+
+- OS detection for RHEL and derivatives
+- Custom SSH port configuration
+- Firewall configuration with configurable ports
+- SELinux configuration
+- SSH hardening:
+  - Disable password authentication (key-based only)
+  - Disable root login (configurable)
+
+For more details, see the [secure-vm README](roles/secure-vm/README.md).
+
+### setup-vm
+
+The `setup-vm` role sets up users and installs tools on a VM.
+
+Features:
+
+- Creates a configurable number of users with sequential naming
+- Each user gets their own home directory
+- Optional sudo access for users
+- SSH key pair generation for each user
+- Installs a configurable set of tools
+
+For more details, see the [setup-vm README](roles/setup-vm/README.md).
+
+## Prerequisites
 
 As Ansible is not included in the RHEL8 repositories, you need to add a new repo
 
@@ -29,14 +63,14 @@ ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa_ansible
 ssh-copy-id -i ~/.ssh/id_rsa_ansible.pub ansible@MYHOST
 ```
 
-### Clone the repository
+## Clone the repository
 
 ```
 raphael@desktop:~$ git clone https://github.com/RapTho/vm-security-hardening.git
 raphael@desktop:~$ cd vm-security-hardening
 ```
 
-### Add your ansible managed vm
+## Add your ansible managed vm
 
 In the [inventory](inventory) file, replace the example IP address with your vm's IP or FQDN.
 
@@ -47,28 +81,28 @@ Do **NOT remove** the ansible_port or ansible_ssh_private_key_file.
 192.168.122.136 ansible_port="{{ ssh_port }}" ansible_ssh_private_key_file=~/.ssh/id_rsa_ansible
 ```
 
-### Set a password for the non-root users
+## Configuration
 
-You first need to **set a password for the Ansible vault**. When later running the playbook, you need this password again.
+### Customizing the secure-vm role
 
-```
-raphael@desktop:~$ ansible-vault create password.yml
-New Vault password:
-Confirm New Vault password:
-```
+You can customize the secure-vm role by modifying the following files:
 
-Enter your password to the key **password** in the following format:
+- `roles/secure-vm/defaults/main.yml`: Change default settings like SSH port and default firewall ports
+- `roles/secure-vm/vars/main.yml`: Add additional firewall ports
 
-```yaml
-password: myPassword
-```
+### Customizing the setup-vm role
 
-### Run the Ansible playbook
+You can customize the setup-vm role by modifying the following files:
+
+- `roles/setup-vm/defaults/main.yml`: Change user settings and default tools
+- `roles/setup-vm/vars/main.yml`: Add additional tools to install
+
+## Run the Ansible playbook
 
 The remote host will be **reset** to its previous state. All workshop users and their home directories will be deleted!
 
 ```
-raphael@desktop:~$ ansible-playbook playbook.yml --vault-id password.yml@prompt
+raphael@desktop:~$ ansible-playbook playbook.yml
 ```
 
-The VM is now ready.
+The VM is now ready with security hardening applied and users/tools set up.

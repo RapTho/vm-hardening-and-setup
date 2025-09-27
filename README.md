@@ -1,4 +1,4 @@
-# VM Security Hardening and Setup
+# VM security hardening and setup
 
 This project provides Ansible roles for hardening the security of RHEL-based VMs and setting up users and tools.
 

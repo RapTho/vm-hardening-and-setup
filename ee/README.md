@@ -7,9 +7,9 @@ This directory contains the configuration for building an Ansible Execution Envi
 - [Podman](https://podman.io/) installed on your system
 - Python 3.9 or newer
 
-## Installing ansible-builder
+## Installing build tools
 
-To install ansible-builder in a new virtual environment (recommended) using pip
+Install `ansible-builder` in a virtual environment (recommended) using pip
 
 ```bash
 python3 -m venv ansible-env
@@ -26,13 +26,13 @@ The process involves two main steps:
 
 ### Step 1: Create the build context
 
-From this directory, run:
+From **this directory** (`ee/`), run:
 
 ```bash
 ansible-builder create
 ```
 
-This will create a `context/` directory containing all the files needed to build the execution environment.
+This will create a `context/` directory containing all the files needed to build the Execution Environment.
 
 ### Step 2: Build the container image
 
@@ -42,7 +42,7 @@ Copy the custom roles to the context folder:
 cp -r ../roles context/roles
 ```
 
-After creating the build context, build the container image:
+Build the container image:
 
 ```bash
 ansible-builder build -v

@@ -4,6 +4,7 @@ This role sets up users and installs tools on a VM.
 
 ## Requirements
 
+- Target VM must be running RHEL or a derivative (CentOS, Rocky, AlmaLinux, Fedora)
 - Ansible 2.9 or higher
 
 ## Role Variables
@@ -34,22 +35,14 @@ additional_tools_packages: []
 ### User Management
 
 - Creates a configurable number of users with sequential naming (e.g., user1, user2, etc.)
-- Each user gets their own home directory
 - Optional sudo access for users (disabled by default)
-- SSH key pair generation for each user:
-  - Keys are generated on the Ansible control node
-  - Public keys are deployed to the target VM
-  - Private keys remain on the Ansible control node for secure access
+- SSH key pair generation for each user
 
 ### Tools Installation
 
 - Installs a configurable set of tools
 - Default tools include tmux, git, vim, and container-tools
 - Additional tools can be specified in vars/main.yml
-
-## Dependencies
-
-None.
 
 ## Example Playbook
 

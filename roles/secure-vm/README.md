@@ -43,16 +43,12 @@ additional_firewall_allowed_ports: []
 ## Features
 
 - OS detection for RHEL and derivatives
-- Custom SSH port configuration
 - Firewall configuration with configurable ports
 - SELinux configuration
 - SSH hardening:
+  - Custom SSH port configuration
   - Disable password authentication (key-based only)
-  - Disable root login (configurable)
-
-## Dependencies
-
-None.
+  - Disable root login
 
 ## Example Playbook
 

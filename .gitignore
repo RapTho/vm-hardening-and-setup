@@ -3,3 +3,4 @@
 *.log
 ee/context
 ansible-env/
+keys/

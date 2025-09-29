@@ -1,16 +1,16 @@
 ---
 - name: Create user accounts
   ansible.builtin.user:
-    name: "{{ users_base_name }}{{ item }}"
+    name: "{{ users_base_name }}{{ item | string }}"
     state: present
     create_home: yes
-    home: "{{ users_home_base }}/{{ users_base_name }}{{ item }}"
+    home: "{{ users_home_base }}/{{ users_base_name }}{{ item | string }}"
   loop: "{{ range(1, users_count + 1) | list }}"
 
 - name: Add sudo access for users
   ansible.builtin.lineinfile:
     path: /etc/sudoers.d/users
-    line: "{{ users_base_name }}{{ item }} ALL=(ALL) NOPASSWD: ALL"
+    line: "{{ users_base_name }}{{ item | string }} ALL=(ALL) NOPASSWD: ALL"
     create: yes
     mode: 0440
   loop: "{{ range(1, users_count + 1) | list }}"
@@ -18,10 +18,10 @@
 
 - name: Create .ssh directory for each user
   ansible.builtin.file:
-    path: "{{ users_home_base }}/{{ users_base_name }}{{ item }}/.ssh"
+    path: "{{ users_home_base }}/{{ users_base_name }}{{ item | string }}/.ssh"
     state: directory
-    owner: "{{ users_base_name }}{{ item }}"
-    group: "{{ users_base_name }}{{ item }}"
+    owner: "{{ users_base_name }}{{ item | string }}"
+    group: "{{ users_base_name }}{{ item | string }}"
     mode: "0700"
   loop: "{{ range(1, users_count + 1) | list }}"
 
@@ -34,20 +34,30 @@
   become: no
   run_once: true
 
+- name: Check if SSH key already exists for each user
+  ansible.builtin.stat:
+    path: "{{ playbook_dir }}/keys/{{ users_base_name }}{{ item | string }}_id_rsa"
+  delegate_to: localhost
+  become: no
+  register: ssh_key_stat
+  loop: "{{ range(1, users_count + 1) | list }}"
+
 - name: Generate SSH key pair for each user
   community.crypto.openssh_keypair:
-    path: "{{ playbook_dir }}/keys/{{ users_base_name }}{{ item }}_id_rsa"
+    path: "{{ playbook_dir }}/keys/{{ users_base_name }}{{ item.item | string }}_id_rsa"
     type: rsa
     size: 4096
     state: present
     force: no
   delegate_to: localhost
   become: no
-  loop: "{{ range(1, users_count + 1) | list }}"
+  loop: "{{ ssh_key_stat.results }}"
+  when: not item.stat.exists
 
 - name: Add public key to authorized_keys for each user
   ansible.posix.authorized_key:
-    user: "{{ users_base_name }}{{ item }}"
+    user: "{{ users_base_name }}{{ item | string }}"
     state: present
-    key: "{{ lookup('file', playbook_dir + '/keys/' + users_base_name + item + '_id_rsa.pub') }}"
+    key: "{{ lookup('file', playbook_dir + '/keys/' + users_base_name + (item | string) + '_id_rsa.pub') }}"
   loop: "{{ range(1, users_count + 1) | list }}"
+  when: lookup('file', playbook_dir + '/keys/' + users_base_name + (item | string) + '_id_rsa.pub', errors='ignore') != ''

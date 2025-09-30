@@ -1,0 +1,6 @@
+---
+- name: Create users
+  import_tasks: users.yml
+
+- name: Install tools
+  import_tasks: tools.yml

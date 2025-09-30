@@ -1,0 +1,53 @@
+---
+- name: Create user accounts
+  ansible.builtin.user:
+    name: "{{ users_base_name }}{{ item }}"
+    state: present
+    create_home: yes
+    home: "{{ users_home_base }}/{{ users_base_name }}{{ item }}"
+  loop: "{{ range(1, users_count + 1) | list }}"
+
+- name: Add sudo access for users
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/users
+    line: "{{ users_base_name }}{{ item }} ALL=(ALL) NOPASSWD: ALL"
+    create: yes
+    mode: 0440
+  loop: "{{ range(1, users_count + 1) | list }}"
+  when: users_create_sudo_access | bool
+
+- name: Create .ssh directory for each user
+  ansible.builtin.file:
+    path: "{{ users_home_base }}/{{ users_base_name }}{{ item }}/.ssh"
+    state: directory
+    owner: "{{ users_base_name }}{{ item }}"
+    group: "{{ users_base_name }}{{ item }}"
+    mode: "0700"
+  loop: "{{ range(1, users_count + 1) | list }}"
+
+- name: Create directory for storing keys on Ansible control node
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/keys"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  become: no
+  run_once: true
+
+- name: Generate SSH key pair for each user
+  community.crypto.openssh_keypair:
+    path: "{{ playbook_dir }}/keys/{{ users_base_name }}{{ item }}_id_rsa"
+    type: rsa
+    size: 4096
+    state: present
+    force: no
+  delegate_to: localhost
+  become: no
+  loop: "{{ range(1, users_count + 1) | list }}"
+
+- name: Add public key to authorized_keys for each user
+  ansible.posix.authorized_key:
+    user: "{{ users_base_name }}{{ item }}"
+    state: present
+    key: "{{ lookup('file', playbook_dir + '/keys/' + users_base_name + item + '_id_rsa.pub') }}"
+  loop: "{{ range(1, users_count + 1) | list }}"

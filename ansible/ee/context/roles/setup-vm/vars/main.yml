@@ -1,0 +1,7 @@
+---
+# vars file for setup-vm
+
+additional_tools_packages: []
+#   - wget
+#   - curl
+#   - htop

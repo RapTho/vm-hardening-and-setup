@@ -1,0 +1,21 @@
+# Resource group configuration
+resource_group = "my-resource-group"
+
+# Region and zone
+region = "us-south"
+zone   = "us-south-1"
+
+# Network configuration
+vpc_name           = "my-vpc"
+subnet_name        = "my-subnet"
+security_group_name = "my-security-group"
+
+# VM configuration
+vm_name    = "my-vm"
+vm_profile = "cx2-2x4"  # 2 vCPUs, 4 GB RAM
+image_name = "ibm-redhat-8-6-minimal-amd64-3"  # RHEL 8.6
+ssh_port   = 32122
+
+# User configuration
+# Leave empty to use current system user, or specify a custom username
+username = ""

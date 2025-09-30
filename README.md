@@ -1,8 +1,72 @@
-# VM security hardening and setup
+# VM Security Hardening and Deployment
 
-This project provides Ansible roles for hardening the security of RHEL-based VMs and setting up users and tools.
+This project provides tools for deploying and securing virtual machines in IBM Cloud:
 
-## Roles
+- **Terraform** for automated VM deployment in IBM Cloud
+- **Ansible** for hardening the security of RHEL-based VMs and setting up users and tools
+
+## Prerequisites
+
+### Required Tools
+
+1. **IBM Cloud Account**
+
+- Link to IBM Cloud: [https://cloud.ibm.com/](https://cloud.ibm.com/)
+
+2. **Terraform**
+
+- Follow the [official Terraform installation guide](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli#install-terraform)
+- You'll need an [IBM Cloud API key](https://www.ibm.com/docs/en/masv-and-l/cd?topic=cli-creating-your-cloud-api-key)
+
+3. **Ansible**
+   More details can be found in the [ansible/README.md](./ansible/README.md).
+
+```bash
+python3 -m venv ansible-env
+source ansible-env/bin/activate  # On Windows: ansible-env\Scripts\activate
+pip install ansible-builder ansible-navigator
+```
+
+4. **Podman**
+
+- Required for building the Ansible execution environment
+- Follow the [official Podman installation guide](https://podman.io/getting-started/installation)
+
+### How to use
+
+1. Set up your IBM Cloud API key:
+
+   ```bash
+   export IC_API_KEY=your_api_key
+   ```
+
+2. Initialize Terraform:
+
+   ```bash
+   cd terraform
+   terraform init
+   ```
+
+3. Customize your deployment:
+
+   ```bash
+   cp terraform.tfvars.example terraform.tfvars
+   # Edit terraform.tfvars with your preferred settings
+   ```
+
+4. Deploy the VM:
+   ```bash
+   terraform apply
+   ```
+
+The deployment process will:
+
+1. Check for and generate SSH keys if needed
+2. Deploy the VM in IBM Cloud
+3. Update the Ansible inventory with the new VM's IP address
+4. Run the Ansible playbook to secure and set up the VM
+
+## Ansible Roles
 
 ### secure-vm
 
@@ -17,7 +81,7 @@ Features:
   - Disable password authentication (key-based only)
   - Disable root login
 
-For more details, see the [secure-vm README](roles/secure-vm/README.md).
+For more details, see the [secure-vm README](ansible/roles/secure-vm/README.md).
 
 ### setup-vm
 
@@ -30,62 +94,11 @@ Features:
 - Installs a configurable set of tools
 - Optional sudo access for users
 
-For more details, see the [setup-vm README](roles/setup-vm/README.md).
-
-## Getting started with Execution Environment
-
-This project uses an Ansible Execution Environment (EE) to package the roles and their dependencies into a container image, providing a consistent environment for running the playbooks.
-
-Checkout the [ee/README.md](./ee/README.md) for build instructions to build your execution environment container image.
-
-### Installing the execution tool
-
-Install `ansible-navigator` in a virtual environment (recommended) using pip
-
-```bash
-python3 -m venv ansible-env
-source ansible-env/bin/activate  # On Windows: ansible-env\Scripts\activate
-pip install ansible-navigator
-```
-
-### Preparing your target(s)
-
-1. Create an ansible user with sudo privileges on your targets:
-
-```bash
-sudo useradd ansible
-sudo passwd ansible
-sudo echo "ansible ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ansible
-```
-
-2. Create SSH keys and copy the public key to all targets you wish to manage:
-
-```bash
-ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa_ansible
-ssh-copy-id -i ~/.ssh/id_rsa_ansible.pub ansible@YOUR_HOST_IP
-```
-
-3. Update the [inventory file](./inventory) with your target's IP address or hostname:
-
-```ini
-[workstation]
-YOUR_HOST_IP ansible_port="{{ ssh_port }}" ansible_ssh_private_key_file=~/.ssh/id_rsa_ansible
-```
-
-### Running Playbooks with the Execution Environment
-
-Run the playbook using `ansible-navigator` with the execution environment:
-
-```bash
-ansible-navigator run playbook.yml -i inventory --eei localhost/ansible-execution-env:latest --pull-policy never
-```
+For more details, see the [setup-vm README](ansible/roles/setup-vm/README.md).
 
 ### SSH Keys for created users
 
-When you run the playbook, the setup-vm role will:
-
-1. Create a `keys/` directory in your project root
-2. Generate SSH key pairs for each user in this directory
+When you run the playbook, the setup-vm role will create a `keys/` directory in your project root and populate it with the generated SSH keys
 
 Find the keys at:
 
@@ -109,12 +122,19 @@ ssh -i keys/user1_id_rsa -p <ssh_port> user1@MyHostIP
 
 You can customize the secure-vm role by modifying the following files:
 
-- `roles/secure-vm/defaults/main.yml`: Change default settings like SSH port and permitRootLogin
-- `roles/secure-vm/vars/main.yml`: Add additional firewall ports
+- `ansible/roles/secure-vm/defaults/main.yml`: Change default settings like SSH port and permitRootLogin
+- `ansible/roles/secure-vm/vars/main.yml`: Add additional firewall ports
 
 ### Customizing the setup-vm role
 
 You can customize the setup-vm role by modifying the following files:
 
-- `roles/setup-vm/defaults/main.yml`: Change user settings and default tools
-- `roles/setup-vm/vars/main.yml`: Add additional tools to install
+- `ansible/roles/setup-vm/defaults/main.yml`: Change user settings and default tools
+- `ansible/roles/setup-vm/vars/main.yml`: Add additional tools to install
+
+### Customizing the Terraform deployment
+
+You can customize the Terraform deployment by modifying the following files:
+
+- `terraform/terraform.tfvars`: Set your preferred VM configuration
+- `terraform/variables.tf`: Add or modify available variables

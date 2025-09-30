@@ -1,0 +1,18 @@
+---
+# defaults file for setup-vm
+
+# User configuration
+users_count: 1
+users_base_name: "user"
+users_home_base: "/home"
+users_create_sudo_access: false # Default to no sudo access
+
+# Default tools to install
+default_tools_packages:
+  - tmux
+  - git
+  - vim
+  - container-tools
+
+# This will be merged with user-defined tools in vars/main.yml
+tools_packages: "{{ default_tools_packages + additional_tools_packages | default([]) }}"

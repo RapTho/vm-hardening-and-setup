@@ -1,0 +1,6 @@
+---
+# handlers file for secure-vm
+- name: Restart ssh
+  service: 
+    name: sshd
+    state: restarted

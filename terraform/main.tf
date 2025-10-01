@@ -1,7 +1,7 @@
 # Run the setup_keys.sh script to ensure SSH keys exist
 resource "null_resource" "setup_keys" {
   provisioner "local-exec" {
-    command = "bash ${path.module}/scripts/setup_keys.sh"
+    command = "bash scripts/setup_keys.sh"
   }
 }
 
@@ -18,11 +18,11 @@ data "local_file" "ansible_public_key" {
 
 locals {
   # Use the SSH public keys from data sources
-  ssh_public_key      = data.local_file.ssh_public_key.content
-  ansible_public_key  = data.local_file.ansible_public_key.content
-  
+  ssh_public_key     = data.local_file.ssh_public_key.content
+  ansible_public_key = data.local_file.ansible_public_key.content
+
   # User data script for setting up users
-  user_data = templatefile("${path.module}/scripts/user_data.tpl", {
+  user_data = templatefile("scripts/user_data.tpl", {
     username           = var.username,
     ssh_public_key     = local.ssh_public_key,
     ansible_public_key = local.ansible_public_key,
@@ -36,9 +36,10 @@ resource "ibm_resource_group" "group" {
 
 # Create VPC
 resource "ibm_is_vpc" "vpc" {
-  name           = var.vpc_name
-  resource_group = ibm_resource_group.group.id
-  depends_on     = [null_resource.setup_keys]
+  name                        = var.vpc_name
+  resource_group              = ibm_resource_group.group.id
+  default_security_group_name = var.security_group_name
+  depends_on                  = [null_resource.setup_keys]
 }
 
 # Create VPC address prefix
@@ -58,16 +59,9 @@ resource "ibm_is_subnet" "subnet" {
   depends_on      = [ibm_is_vpc_address_prefix.vpc_address_prefix]
 }
 
-# Create security group
-resource "ibm_is_security_group" "security_group" {
-  name           = var.security_group_name
-  vpc            = ibm_is_vpc.vpc.id
-  resource_group = ibm_resource_group.group.id
-}
-
 # Add default SSH rule (port 22) to security group
 resource "ibm_is_security_group_rule" "security_group_rule_ssh_default" {
-  group     = ibm_is_security_group.security_group.id
+  group     = ibm_is_vpc.vpc.default_security_group
   direction = "inbound"
   remote    = "0.0.0.0/0"
 
@@ -79,7 +73,7 @@ resource "ibm_is_security_group_rule" "security_group_rule_ssh_default" {
 
 # Add custom SSH rule to security group
 resource "ibm_is_security_group_rule" "security_group_rule_ssh_custom" {
-  group     = ibm_is_security_group.security_group.id
+  group     = ibm_is_vpc.vpc.default_security_group
   direction = "inbound"
   remote    = "0.0.0.0/0"
 
@@ -91,7 +85,7 @@ resource "ibm_is_security_group_rule" "security_group_rule_ssh_custom" {
 
 # Add outbound rule to security group
 resource "ibm_is_security_group_rule" "security_group_rule_outbound" {
-  group     = ibm_is_security_group.security_group.id
+  group     = ibm_is_vpc.vpc.default_security_group
   direction = "outbound"
   remote    = "0.0.0.0/0"
 }
@@ -121,7 +115,7 @@ resource "ibm_is_instance" "instance" {
 
   primary_network_interface {
     subnet          = ibm_is_subnet.subnet.id
-    security_groups = [ibm_is_security_group.security_group.id]
+    security_groups = [ibm_is_vpc.vpc.default_security_group]
   }
 }
 
@@ -137,25 +131,42 @@ locals {
   floating_ip_address = ibm_is_floating_ip.floating_ip.address
 }
 
+# Read the current secure-vm role defaults file
+data "local_file" "secure_vm_defaults" {
+  filename = "../ansible/roles/secure-vm/defaults/main.yml"
+}
+
 # Update the Ansible inventory with the new VM
-resource "null_resource" "update_inventory" {
-  triggers = {
-    floating_ip = local.floating_ip_address
+resource "local_file" "update_inventory" {
+  filename = "../ansible/inventory"
+  content  = "[workstation]\n${local.floating_ip_address} ansible_port=${var.default_ssh_port} ansible_ssh_private_key_file=~/.ssh/id_rsa_ansible"
+
+  # This will prevent the file from being deleted on destroy
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+# Update the secure-vm role defaults with the custom SSH port
+resource "local_file" "update_secure_vm_defaults" {
+  filename = "../ansible/roles/secure-vm/defaults/main.yml"
+  content = replace(
+    data.local_file.secure_vm_defaults.content,
+    "ssh_port: [0-9]+",
+    "ssh_port: ${var.custom_ssh_port}"
+  )
+
+  # This will prevent the file from being deleted on destroy
+  lifecycle {
+    prevent_destroy = true
   }
 
-  provisioner "local-exec" {
-    command = "bash ${path.module}/scripts/update_inventory.sh"
-    environment = {
-      TF_IP_ADDRESS = local.floating_ip_address
-      TF_DEFAULT_SSH_PORT = var.default_ssh_port
-      TF_CUSTOM_SSH_PORT = var.custom_ssh_port
-    }
-  }
+  depends_on = [local_file.update_inventory]
 }
 
 # Build the Ansible execution environment if needed
 resource "null_resource" "build_ee" {
-  depends_on = [null_resource.update_inventory]
+  depends_on = [local_file.update_inventory, local_file.update_secure_vm_defaults]
 
   provisioner "local-exec" {
     command = "bash ${path.module}/scripts/build_ee.sh"
@@ -164,14 +175,14 @@ resource "null_resource" "build_ee" {
 
 # Run the Ansible playbook
 resource "null_resource" "run_ansible" {
-  depends_on = [null_resource.build_ee, null_resource.update_inventory]
+  depends_on = [null_resource.build_ee, local_file.update_inventory, local_file.update_secure_vm_defaults]
 
   provisioner "local-exec" {
-    command = "bash ${path.module}/scripts/run_ansible.sh"
+    command     = "bash ${path.module}/scripts/run_ansible.sh"
     interpreter = ["/bin/bash", "-c"]
     environment = {
       TF_IP_ADDRESS = local.floating_ip_address
-      SSH_PORT = var.default_ssh_port
+      SSH_PORT      = var.default_ssh_port
     }
   }
 }

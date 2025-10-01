@@ -68,7 +68,6 @@
   when: permitRootLogin == true
   notify: Restart ssh
 
-# Disable password authentication
 - name: Disable password authentication
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
@@ -79,3 +78,6 @@
     - { From: "^PasswordAuthentication", To: "PasswordAuthentication no" }
     - { From: "^#PasswordAuthentication", To: "PasswordAuthentication no" }
   notify: Restart ssh
+
+- name: Force handlers to run
+  ansible.builtin.meta: flush_handlers

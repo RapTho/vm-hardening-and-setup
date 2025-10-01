@@ -1,0 +1,10 @@
+---
+# defaults file for secure-vm
+permitRootLogin: false
+ssh_port: 32122
+
+default_firewall_allowed_ports:
+  - "{{ ssh_port }}/tcp"
+
+# This will be merged with user-defined ports in vars/main.yml
+firewall_allowed_ports: "{{ default_firewall_allowed_ports + additional_firewall_allowed_ports | default([]) }}"

@@ -20,3 +20,7 @@
 
 - name: Security hardening of the host
   import_tasks: security.yml
+
+- name: Update inventory with custom SSH port
+  import_tasks: update_inventory.yml
+  when: ansible_port != ssh_port

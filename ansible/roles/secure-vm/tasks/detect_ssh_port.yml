@@ -1,8 +1,9 @@
 ---
 # ansible_port can change throughout this role, keep a copy around
-- name: Set configured port fact
+- name: Set configured port facts
   ansible.builtin.set_fact:
     configured_port: "{{ ssh_port }}"
+    initial_ansible_port: "{{ ansible_port }}"
 
 # From localhost, check if we're able to reach {{ inventory_hostname }} on port 22
 - name: Check if default SSH port is used

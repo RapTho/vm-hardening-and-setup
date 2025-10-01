@@ -1,0 +1,15 @@
+---
+# This task updates the inventory file with the custom SSH port
+
+- name: Update inventory file with custom SSH port
+  ansible.builtin.lineinfile:
+    path: "{{ playbook_dir }}/inventory"
+    regexp: "^{{ inventory_hostname }}.*ansible_port=.*"
+    line: "{{ inventory_hostname }} ansible_port={{ ssh_port }} ansible_ssh_private_key_file=~/.ssh/id_rsa_ansible"
+  delegate_to: localhost
+  when: ansible_port != ssh_port
+
+- name: Display inventory update status
+  ansible.builtin.debug:
+    msg: "Updated inventory to use custom SSH port {{ ssh_port }} for future connections"
+  when: ansible_port != ssh_port

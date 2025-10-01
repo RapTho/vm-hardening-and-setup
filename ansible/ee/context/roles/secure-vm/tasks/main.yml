@@ -1,0 +1,30 @@
+---
+- name: Gather facts about the system
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - "!min"
+      - "distribution"
+
+- name: Check if system is RHEL or derivative
+  ansible.builtin.set_fact:
+    is_rhel_derivative: "{{ ansible_facts['distribution'] in ['RedHat', 'CentOS', 'Rocky', 'AlmaLinux', 'Fedora'] }}"
+
+- name: Fail if not running on RHEL or derivative
+  ansible.builtin.fail:
+    msg: "This role is designed for RHEL and its derivatives. Current OS: {{ ansible_facts['distribution'] }}"
+  when: not is_rhel_derivative
+
+- name: Detect the hosts ssh port
+  import_tasks: detect_ssh_port.yml
+
+- name: Security hardening of the host
+  import_tasks: security.yml
+
+- name: Switch to the custom SSH port
+  import_tasks: switch_ssh_port.yml
+  when: ansible_port != ssh_port
+
+- name: Update inventory with custom SSH port
+  import_tasks: update_inventory.yml
+  when: ansible_port != ssh_port

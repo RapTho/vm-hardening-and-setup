@@ -1,0 +1,25 @@
+# Resource group configuration
+resource_group = "my-resource-group"
+
+# Region and zone
+# Check all available at: https://cloud.ibm.com/docs/overview?topic=overview-locations#regions
+region = "eu-de"
+zone   = "eu-de-1"
+
+# Network configuration
+vpc_name           = "my-vpc"
+subnet_name        = "my-subnet"
+security_group_name = "my-security-group"
+
+# VM configuration
+# Profiles available at: https://cloud.ibm.com/docs/vpc?topic=vpc-profiles&interface=api#compute
+# Images available at: https://cloud.ibm.com/infrastructure/compute/stockImages
+vm_name    = "my-vm"
+vm_profile = "cx2d-4x8"  # 4 vCPUs, 8 GB RAM, 150 GB storage
+image_name = "ibm-redhat-9-4-minimal-amd64-10"  # RHEL 9.4
+default_ssh_port = 22
+custom_ssh_port  = 32122
+
+# User configuration
+# Leave empty to use current system user, or specify a custom username
+username = ""

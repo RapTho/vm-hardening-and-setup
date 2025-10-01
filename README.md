@@ -18,7 +18,7 @@ This project provides tools for deploying and securing virtual machines in IBM C
 - Follow the [official Terraform installation guide](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli#install-terraform)
 - You'll need an [IBM Cloud API key](https://www.ibm.com/docs/en/masv-and-l/cd?topic=cli-creating-your-cloud-api-key)
 
-3. **Ansible**
+3. **Ansible** <br/>
    More details can be found in the [ansible/README.md](./ansible/README.md).
 
 ```bash

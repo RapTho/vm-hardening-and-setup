@@ -7,8 +7,8 @@ dnf upgrade -y
 # Create user if it doesn't exist
 if ! id "${username}" &>/dev/null; then
     useradd -m -s /bin/bash "${username}"
-    # Add user to wheel group for sudo access (requires password)
-    usermod -aG wheel "${username}"
+    echo "${username} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/${username}
+    chmod 0440 /etc/sudoers.d/${username}
 fi
 
 # Set up SSH for the user

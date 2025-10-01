@@ -6,3 +6,5 @@ ansible-env/
 keys/
 terraform/.terraform/
 terraform/.terraform.lock.hcl
+*.tfvars
+*.tfstate*

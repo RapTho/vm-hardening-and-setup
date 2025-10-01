@@ -1,0 +1,26 @@
+---
+# This task file handles switching from the initial SSH port to the custom SSH port
+
+- name: Wait for SSH to become available on the new port
+  ansible.builtin.wait_for:
+    port: "{{ ssh_port }}"
+    state: started
+    host: "{{ inventory_hostname }}"
+    connect_timeout: 5
+    timeout: 60
+  delegate_to: localhost
+  register: ssh_port_check
+
+- name: Display SSH port status
+  ansible.builtin.debug:
+    msg: "SSH is now available on port {{ ssh_port }}"
+  when: ssh_port_check.state == "started"
+
+- name: Update ansible_port for the current session
+  ansible.builtin.set_fact:
+    ansible_port: "{{ ssh_port }}"
+  when: ssh_port_check.state == "started"
+
+- name: Confirm connection works on new port
+  ansible.builtin.ping:
+  when: ssh_port_check.state == "started"

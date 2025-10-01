@@ -14,7 +14,7 @@ if ! podman image exists localhost/ansible-execution-env:latest; then
     echo "Ansible execution environment not found. Building it now..."
     
     # Navigate to the ansible/ee directory
-    cd "$(dirname "$0")/../ansible/ee" || exit 1
+    cd "$(dirname "$0")/../../ansible/ee" || exit 1
     
     # Create and activate Python virtual environment if it doesn't exist
     if [ ! -d "../ansible-env" ]; then
@@ -45,7 +45,7 @@ if ! podman image exists localhost/ansible-execution-env:latest; then
     
     # Build the execution environment
     echo "Building the execution environment..."
-    ansible-builder build -v
+    ansible-builder build --no-cache -v
     
     # Deactivate the virtual environment
     deactivate

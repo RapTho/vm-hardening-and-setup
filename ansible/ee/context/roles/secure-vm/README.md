@@ -21,9 +21,6 @@ ssh_port: 32122
 # Default firewall allowed ports
 default_firewall_allowed_ports:
   - "{{ ssh_port }}/tcp"
-  - "8000/tcp"
-  - "8080/tcp"
-  - "3000/tcp"
 
 # This will be merged with user-defined ports in vars/main.yml
 firewall_allowed_ports: "{{ default_firewall_allowed_ports + additional_firewall_allowed_ports | default([]) }}"
@@ -43,16 +40,12 @@ additional_firewall_allowed_ports: []
 ## Features
 
 - OS detection for RHEL and derivatives
-- Custom SSH port configuration
 - Firewall configuration with configurable ports
 - SELinux configuration
 - SSH hardening:
+  - Custom SSH port configuration
   - Disable password authentication (key-based only)
-  - Disable root login (configurable)
-
-## Dependencies
-
-None.
+  - Disable root login
 
 ## Example Playbook
 

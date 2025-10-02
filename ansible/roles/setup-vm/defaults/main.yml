@@ -12,6 +12,8 @@ default_tools_packages:
   - tmux
   - git
   - vim
+  - nano
+  - python3-pip
   - container-tools
 
 # This will be merged with user-defined tools in vars/main.yml

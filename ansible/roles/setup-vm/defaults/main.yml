@@ -2,7 +2,7 @@
 # defaults file for setup-vm
 
 # User configuration
-users_count: 1
+users_count: 10
 users_base_name: "user"
 users_home_base: "/home"
 users_create_sudo_access: false # Default to no sudo access

@@ -140,11 +140,6 @@ data "local_file" "secure_vm_defaults" {
 resource "local_file" "update_inventory" {
   filename = "../ansible/inventory"
   content  = "[workstation]\n${local.floating_ip_address} ansible_port=${var.default_ssh_port} ansible_ssh_private_key_file=~/.ssh/id_rsa_ansible"
-
-  # This will prevent the file from being deleted on destroy
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 # Update the secure-vm role defaults with the custom SSH port
@@ -155,12 +150,6 @@ resource "local_file" "update_secure_vm_defaults" {
     "ssh_port: [0-9]+",
     "ssh_port: ${var.custom_ssh_port}"
   )
-
-  # This will prevent the file from being deleted on destroy
-  lifecycle {
-    prevent_destroy = true
-  }
-
   depends_on = [local_file.update_inventory]
 }
 

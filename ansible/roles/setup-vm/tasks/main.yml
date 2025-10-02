@@ -4,3 +4,6 @@
 
 - name: Install tools
   import_tasks: tools.yml
+
+- name: Install IBM Cloud CLI and plugins
+  import_tasks: ibmcloud.yml

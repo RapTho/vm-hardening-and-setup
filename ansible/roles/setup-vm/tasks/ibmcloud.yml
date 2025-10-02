@@ -1,0 +1,62 @@
+---
+# Tasks for installing IBM Cloud CLI and plugins
+
+- name: Check if IBM Cloud CLI is installed
+  ansible.builtin.command: which ibmcloud
+  register: ibmcloud_check
+  ignore_errors: true
+  changed_when: false
+
+- name: Install IBM Cloud CLI
+  block:
+    - name: Download IBM Cloud CLI installer from GitHub
+      ansible.builtin.get_url:
+        url: https://download.clis.cloud.ibm.com/ibm-cloud-cli/2.37.1/IBM_Cloud_CLI_2.37.1_amd64.tar.gz
+        dest: /tmp/IBM_Cloud_CLI_amd64.tar.gz
+        mode: "0644"
+
+    - name: Create temporary directory for IBM Cloud CLI
+      ansible.builtin.file:
+        path: /tmp/ibmcloud_cli
+        state: directory
+        mode: "0755"
+
+    - name: Extract IBM Cloud CLI
+      ansible.builtin.unarchive:
+        src: /tmp/IBM_Cloud_CLI_amd64.tar.gz
+        dest: /tmp/ibmcloud_cli
+        remote_src: yes
+
+    - name: Install IBM Cloud CLI
+      ansible.builtin.command: /tmp/ibmcloud_cli/Bluemix_CLI/install
+      args:
+        creates: /usr/local/bin/ibmcloud
+
+    - name: Clean up temporary files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/IBM_Cloud_CLI_amd64.tar.gz
+        - /tmp/ibmcloud_cli
+  when: ibmcloud_check.rc != 0
+
+- name: Check installed IBM Cloud plugins
+  ansible.builtin.command: ibmcloud plugin list
+  register: ibmcloud_plugins
+  changed_when: false
+  when: ibmcloud_check.rc == 0
+
+- name: Install container-registry plugin
+  ansible.builtin.command: ibmcloud plugin install container-registry -f
+  when:
+    - ibmcloud_check.rc == 0
+    - ibmcloud_plugins.stdout is defined
+    - "'container-registry' not in ibmcloud_plugins.stdout"
+
+- name: Install code-engine plugin
+  ansible.builtin.command: ibmcloud plugin install code-engine -f
+  when:
+    - ibmcloud_check.rc == 0
+    - ibmcloud_plugins.stdout is defined
+    - "'code-engine' not in ibmcloud_plugins.stdout"

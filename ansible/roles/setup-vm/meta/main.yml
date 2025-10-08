@@ -3,4 +3,4 @@ galaxy_info:
   author: Raphael Tholl
   description: This configures a RHEL or derivative based VM
   license: MIT
-  min_ansible_version: 2.9
+  min_ansible_version: "2.9"
